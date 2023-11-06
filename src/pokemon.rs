@@ -48,7 +48,7 @@ pub enum PokemonNature {
     Quirky,
 }
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum PokemonEggGroup {
     Monster,
     WaterA,
@@ -77,10 +77,19 @@ pub enum PokemonGender {
 
 #[derive(Debug, Clone)]
 pub struct Pokemon {
-    number: u8,
+    number: u16,
     name: String,
     types: (PokemonType, Option<PokemonType>),
     egg_groups: (PokemonEggGroup, Option<PokemonEggGroup>),
     nature: Option<PokemonNature>,
-    percentage_male: u8,
+    percentage_male: f32,
+}
+
+impl Pokemon {
+    pub fn egg_groups_include(&self, egg_group: &PokemonEggGroup) -> bool {
+        match self.egg_groups.1 {
+            Some(ref egg_group2) => self.egg_groups.0 == *egg_group || *egg_group2 == *egg_group,
+            None => self.egg_groups.0 == *egg_group,
+        }
+    }
 }
