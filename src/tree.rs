@@ -29,6 +29,16 @@ type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position(u8, u8);
 
+impl Position {
+    pub fn get_partner_position(self) -> Position {
+        let Position(row, col) = self;
+
+        let partner_col = if col % 2 == 0 { col + 1 } else { col - 1 };
+
+        Position(partner_col, row)
+    }
+}
+
 #[derive(Debug)]
 pub struct PokemonBreedTree {
     generations: u8,
