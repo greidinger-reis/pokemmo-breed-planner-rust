@@ -69,6 +69,16 @@ pub enum PokemonEggGroup {
 }
 
 #[derive(Debug)]
+pub enum PokemonIv {
+    HP,
+    Attack,
+    Defense,
+    SpecialAttack,
+    SpecialDefense,
+    Speed,
+}
+
+#[derive(Debug)]
 pub enum PokemonGender {
     Female,
     Male,
@@ -77,12 +87,12 @@ pub enum PokemonGender {
 
 #[derive(Debug, Clone)]
 pub struct Pokemon {
-    number: u16,
-    name: String,
-    types: (PokemonType, Option<PokemonType>),
-    egg_groups: (PokemonEggGroup, Option<PokemonEggGroup>),
-    nature: Option<PokemonNature>,
-    percentage_male: f32,
+    pub number: u16,
+    pub name: String,
+    pub types: (PokemonType, Option<PokemonType>),
+    pub egg_groups: (PokemonEggGroup, Option<PokemonEggGroup>),
+    pub nature: Option<PokemonNature>,
+    pub percentage_male: f32,
 }
 
 impl Pokemon {
