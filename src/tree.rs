@@ -13,21 +13,18 @@ pub enum PokemonBreederKind {
     C,
     D,
     E,
+    Nature,
 }
 
-type PokemonBreederQuantity = HashMap<PokemonBreederKind, u8>;
+pub type PokemonBreederKindPositions = HashMap<Position, PokemonBreederKind>;
 
-#[derive(Debug, Clone)]
-struct BreedTreeFormation {
-    natured: PokemonBreederQuantity,
-    natureless: PokemonBreederQuantity,
+#[derive(Debug)]
+pub struct PokemonBreedTreePosition {
+    natured: PokemonBreederKindPositions,
+    natureless: PokemonBreederKindPositions,
 }
 
-//pub struct PokemonBreedTreeFormationPositions {
-//natured:
-//}
-
-//pub const BREED_TREE_FORMATION_IVS_INFO : phf::Map<&'static str,
+type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position(u8, u8);
@@ -35,101 +32,156 @@ pub struct Position(u8, u8);
 #[derive(Debug)]
 pub struct PokemonBreedTree {
     generations: u8,
-    nodes: HashMap<Position, Pokemon>,
+    pokemon_nodes: HashMap<Position, Pokemon>,
     final_pokemon: Pokemon,
-    position_map: HashMap<u8, BreedTreeFormation>,
+    position_map: PokemonBreedTreePositionMap,
+    breed_errors: Vec<Position>,
 }
 
 impl PokemonBreedTree {
     pub fn new(final_pokemon: Pokemon, generations: u8) -> PokemonBreedTree {
-        let nodes = vec![(Position(0, 0), final_pokemon.clone())]
-            .into_iter()
-            .collect::<HashMap<Position, Pokemon>>();
-
-        let position_map = HashMap::from([
-            (
-                2,
-                BreedTreeFormation {
-                    natured: HashMap::from([
-                        (PokemonBreederKind::A, 2),
-                        (PokemonBreederKind::B, 1),
-                        (PokemonBreederKind::C, 0),
-                        (PokemonBreederKind::D, 0),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                    natureless: HashMap::from([
-                        (PokemonBreederKind::A, 1),
-                        (PokemonBreederKind::B, 1),
-                        (PokemonBreederKind::C, 0),
-                        (PokemonBreederKind::D, 0),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                },
-            ),
-            (
-                3,
-                BreedTreeFormation {
-                    natured: HashMap::from([
-                        (PokemonBreederKind::A, 4),
-                        (PokemonBreederKind::B, 2),
-                        (PokemonBreederKind::C, 1),
-                        (PokemonBreederKind::D, 0),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                    natureless: HashMap::from([
-                        (PokemonBreederKind::A, 2),
-                        (PokemonBreederKind::B, 1),
-                        (PokemonBreederKind::C, 1),
-                        (PokemonBreederKind::D, 0),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                },
-            ),
-            (
-                4,
-                BreedTreeFormation {
-                    natured: HashMap::from([
-                        (PokemonBreederKind::A, 6),
-                        (PokemonBreederKind::B, 5),
-                        (PokemonBreederKind::C, 3),
-                        (PokemonBreederKind::D, 1),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                    natureless: HashMap::from([
-                        (PokemonBreederKind::A, 3),
-                        (PokemonBreederKind::B, 2),
-                        (PokemonBreederKind::C, 2),
-                        (PokemonBreederKind::D, 1),
-                        (PokemonBreederKind::E, 0),
-                    ]),
-                },
-            ),
-            (
-                5,
-                BreedTreeFormation {
-                    natured: HashMap::from([
-                        (PokemonBreederKind::A, 11),
-                        (PokemonBreederKind::B, 10),
-                        (PokemonBreederKind::C, 6),
-                        (PokemonBreederKind::D, 2),
-                        (PokemonBreederKind::E, 2),
-                    ]),
-                    natureless: HashMap::from([
-                        (PokemonBreederKind::A, 5),
-                        (PokemonBreederKind::B, 5),
-                        (PokemonBreederKind::C, 3),
-                        (PokemonBreederKind::D, 2),
-                        (PokemonBreederKind::E, 1),
-                    ]),
-                },
-            ),
-        ]);
+        let breed_errors = Vec::<Position>::new();
+        let pokemon_nodes = HashMap::from([(Position(0, 0), final_pokemon.clone())]);
+        let position_map = init_position_map();
 
         PokemonBreedTree {
-            nodes,
+            pokemon_nodes,
             generations,
-            position_map,
             final_pokemon,
+            position_map,
+            breed_errors,
         }
     }
+}
+
+fn init_position_map() -> PokemonBreedTreePositionMap {
+    let position_map = HashMap::<u8, PokemonBreedTreePosition>::from([
+        (
+            2,
+            PokemonBreedTreePosition {
+                natured: HashMap::from([
+                    (Position(2, 0), PokemonBreederKind::Nature),
+                    (Position(2, 1), PokemonBreederKind::A),
+                    (Position(2, 2), PokemonBreederKind::A),
+                    (Position(2, 3), PokemonBreederKind::B),
+                ]),
+                natureless: HashMap::from([
+                    (Position(1, 0), PokemonBreederKind::A),
+                    (Position(1, 1), PokemonBreederKind::B),
+                ]),
+            },
+        ),
+        (
+            3,
+            PokemonBreedTreePosition {
+                natured: HashMap::from([
+                    (Position(3, 0), PokemonBreederKind::Nature),
+                    (Position(3, 1), PokemonBreederKind::A),
+                    (Position(3, 2), PokemonBreederKind::A),
+                    (Position(3, 3), PokemonBreederKind::B),
+                    (Position(3, 4), PokemonBreederKind::A),
+                    (Position(3, 5), PokemonBreederKind::B),
+                    (Position(3, 6), PokemonBreederKind::A),
+                    (Position(3, 7), PokemonBreederKind::B),
+                ]),
+                natureless: HashMap::from([
+                    (Position(2, 0), PokemonBreederKind::A),
+                    (Position(2, 1), PokemonBreederKind::B),
+                    (Position(2, 2), PokemonBreederKind::A),
+                    (Position(2, 3), PokemonBreederKind::C),
+                ]),
+            },
+        ),
+        (
+            4,
+            PokemonBreedTreePosition {
+                natured: HashMap::from([
+                    (Position(4, 0), PokemonBreederKind::Nature),
+                    (Position(4, 1), PokemonBreederKind::A),
+                    (Position(4, 2), PokemonBreederKind::A),
+                    (Position(4, 3), PokemonBreederKind::B),
+                    (Position(4, 4), PokemonBreederKind::A),
+                    (Position(4, 5), PokemonBreederKind::B),
+                    (Position(4, 6), PokemonBreederKind::A),
+                    (Position(4, 7), PokemonBreederKind::C),
+                    (Position(4, 8), PokemonBreederKind::A),
+                    (Position(4, 9), PokemonBreederKind::B),
+                    (Position(4, 10), PokemonBreederKind::A),
+                    (Position(4, 11), PokemonBreederKind::C),
+                    (Position(4, 12), PokemonBreederKind::B),
+                    (Position(4, 13), PokemonBreederKind::C),
+                    (Position(4, 14), PokemonBreederKind::B),
+                    (Position(4, 15), PokemonBreederKind::D),
+                ]),
+                natureless: HashMap::from([
+                    (Position(3, 0), PokemonBreederKind::A),
+                    (Position(3, 1), PokemonBreederKind::B),
+                    (Position(3, 2), PokemonBreederKind::A),
+                    (Position(3, 3), PokemonBreederKind::C),
+                    (Position(3, 4), PokemonBreederKind::B),
+                    (Position(3, 5), PokemonBreederKind::C),
+                    (Position(3, 6), PokemonBreederKind::B),
+                    (Position(3, 7), PokemonBreederKind::D),
+                ]),
+            },
+        ),
+        (
+            5,
+            PokemonBreedTreePosition {
+                natured: HashMap::from([
+                    (Position(5, 0), PokemonBreederKind::A),
+                    (Position(5, 1), PokemonBreederKind::B),
+                    (Position(5, 2), PokemonBreederKind::A),
+                    (Position(5, 3), PokemonBreederKind::C),
+                    (Position(5, 4), PokemonBreederKind::B),
+                    (Position(5, 5), PokemonBreederKind::C),
+                    (Position(5, 6), PokemonBreederKind::B),
+                    (Position(5, 7), PokemonBreederKind::D),
+                    (Position(5, 8), PokemonBreederKind::B),
+                    (Position(5, 9), PokemonBreederKind::C),
+                    (Position(5, 10), PokemonBreederKind::B),
+                    (Position(5, 11), PokemonBreederKind::D),
+                    (Position(5, 12), PokemonBreederKind::C),
+                    (Position(5, 13), PokemonBreederKind::D),
+                    (Position(5, 14), PokemonBreederKind::C),
+                    (Position(5, 15), PokemonBreederKind::E),
+                    (Position(5, 16), PokemonBreederKind::Nature),
+                    (Position(5, 17), PokemonBreederKind::B),
+                    (Position(5, 18), PokemonBreederKind::B),
+                    (Position(5, 19), PokemonBreederKind::C),
+                    (Position(5, 20), PokemonBreederKind::B),
+                    (Position(5, 21), PokemonBreederKind::C),
+                    (Position(5, 22), PokemonBreederKind::B),
+                    (Position(5, 23), PokemonBreederKind::D),
+                    (Position(5, 24), PokemonBreederKind::B),
+                    (Position(5, 25), PokemonBreederKind::C),
+                    (Position(5, 26), PokemonBreederKind::B),
+                    (Position(5, 27), PokemonBreederKind::D),
+                    (Position(5, 28), PokemonBreederKind::C),
+                    (Position(5, 29), PokemonBreederKind::D),
+                    (Position(5, 30), PokemonBreederKind::C),
+                    (Position(5, 31), PokemonBreederKind::E),
+                ]),
+                natureless: HashMap::from([
+                    (Position(4, 0), PokemonBreederKind::A),
+                    (Position(4, 1), PokemonBreederKind::B),
+                    (Position(4, 2), PokemonBreederKind::A),
+                    (Position(4, 3), PokemonBreederKind::C),
+                    (Position(4, 4), PokemonBreederKind::B),
+                    (Position(4, 5), PokemonBreederKind::C),
+                    (Position(4, 6), PokemonBreederKind::B),
+                    (Position(4, 7), PokemonBreederKind::D),
+                    (Position(4, 8), PokemonBreederKind::B),
+                    (Position(4, 9), PokemonBreederKind::C),
+                    (Position(4, 10), PokemonBreederKind::B),
+                    (Position(4, 11), PokemonBreederKind::D),
+                    (Position(4, 12), PokemonBreederKind::C),
+                    (Position(4, 13), PokemonBreederKind::D),
+                    (Position(4, 14), PokemonBreederKind::C),
+                    (Position(4, 15), PokemonBreederKind::E),
+                ]),
+            },
+        ),
+    ]);
+    position_map
 }
