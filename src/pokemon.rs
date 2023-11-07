@@ -1,3 +1,4 @@
+#![allow(unused, dead_code)]
 #[derive(Debug, Clone)]
 pub enum PokemonType {
     Fire,

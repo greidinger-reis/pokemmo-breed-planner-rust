@@ -1,3 +1,4 @@
+#![allow(unused, dead_code)]
 use phf::phf_map;
 
 type GenderlessPokemonEvoTree = (u16, u16, Option<u16>);

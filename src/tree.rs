@@ -1,5 +1,5 @@
+#![allow(unused, dead_code)]
 use crate::pokemon::Pokemon;
-use phf::phf_map;
 use std::collections::HashMap;
 
 /* In Pokemmo, in breeding, you can only breed a pokemon couple once.
@@ -24,8 +24,6 @@ pub struct PokemonBreedTreePosition {
     natureless: PokemonBreederKindPositions,
 }
 
-type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
-
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position(u8, u8);
 
@@ -35,16 +33,16 @@ impl Position {
 
         let partner_col = if col % 2 == 0 { col + 1 } else { col - 1 };
 
-        Position(partner_col, row)
+        Position(row, partner_col)
     }
 }
 
+type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
+
 #[derive(Debug)]
 pub struct PokemonBreedTree {
-    generations: u8,
     pokemon_nodes: HashMap<Position, Pokemon>,
     final_pokemon: Pokemon,
-    position_map: PokemonBreedTreePositionMap,
     breed_errors: Vec<Position>,
 }
 
@@ -56,9 +54,7 @@ impl PokemonBreedTree {
 
         PokemonBreedTree {
             pokemon_nodes,
-            generations,
             final_pokemon,
-            position_map,
             breed_errors,
         }
     }
