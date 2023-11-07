@@ -1,5 +1,5 @@
 #![allow(unused, dead_code)]
-use crate::pokemon::Pokemon;
+use crate::pokemon::{Pokemon, PokemonGender, PokemonIv};
 use std::collections::HashMap;
 
 /* In Pokemmo, in breeding, you can only breed a pokemon couple once.
@@ -43,24 +43,40 @@ type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 pub struct PokemonBreedTree {
     pokemon_nodes: HashMap<Position, Pokemon>,
     final_pokemon: Pokemon,
+    final_pokemon_ivs: HashMap<PokemonBreederKind, PokemonIv>,
     breed_errors: Vec<Position>,
 }
 
 impl PokemonBreedTree {
-    pub fn new(final_pokemon: Pokemon, generations: u8) -> PokemonBreedTree {
+    pub fn new(
+        final_pokemon: Pokemon,
+        final_pokemon_ivs: HashMap<PokemonBreederKind, PokemonIv>,
+    ) -> PokemonBreedTree {
         let breed_errors = Vec::<Position>::new();
         let pokemon_nodes = HashMap::from([(Position(0, 0), final_pokemon.clone())]);
         let position_map = init_position_map();
+        let generations = if final_pokemon.nature.is_some() {
+            (final_pokemon_ivs.len() + 1) as u8
+        } else {
+            final_pokemon_ivs.len() as u8
+        };
 
         PokemonBreedTree {
             pokemon_nodes,
             final_pokemon,
+            final_pokemon_ivs,
             breed_errors,
         }
     }
 }
 
-fn init_position_map() -> PokemonBreedTreePositionMap {
+struct PokemonBreedTreeNode {
+    pokemon: Pokemon,
+    gender: PokemonGender,
+    ivs: Vec<PokemonIv>,
+}
+
+fn init_position_map() -> HashMap<u8, PokemonBreedTreePosition> {
     let position_map = HashMap::<u8, PokemonBreedTreePosition>::from([
         (
             2,
