@@ -39,12 +39,18 @@ impl Position {
 
 type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 
+//option fields because the initial state of nodes are empty, only ivs are set
+#[derive(Debug)]
+struct PokemonBreedTreeNode {
+    pokemon: Option<Pokemon>, 
+    gender: Option<PokemonGender>,
+    ivs: Vec<PokemonIv>,
+}
+
 #[derive(Debug)]
 pub struct PokemonBreedTree {
-    pokemon_nodes: HashMap<Position, Pokemon>,
-    final_pokemon: Pokemon,
-    final_pokemon_ivs: HashMap<PokemonBreederKind, PokemonIv>,
-    breed_errors: Vec<Position>,
+    pub pokemon_nodes: HashMap<Position, PokemonBreedTreeNode>,
+    pub breed_errors: Vec<Position>,
 }
 
 impl PokemonBreedTree {
@@ -52,32 +58,74 @@ impl PokemonBreedTree {
         final_pokemon: Pokemon,
         final_pokemon_ivs: HashMap<PokemonBreederKind, PokemonIv>,
     ) -> PokemonBreedTree {
+        let final_pokemon_node = PokemonBreedTreeNode{
+            // get all ivs from the final_pokemon_ivs and construct a Vec<PokemonIv>
+            ivs: final_pokemon_ivs.values().cloned().collect(),
+        }
         let breed_errors = Vec::<Position>::new();
-        let pokemon_nodes = HashMap::from([(Position(0, 0), final_pokemon.clone())]);
-        let position_map = init_position_map();
-        let generations = if final_pokemon.nature.is_some() {
-            (final_pokemon_ivs.len() + 1) as u8
-        } else {
-            final_pokemon_ivs.len() as u8
-        };
+        let mut pokemon_nodes = HashMap::from([(Position(0, 0),
+            final_pokemon)]);
+        let last_row_map = init_last_row_mapping();
+        init_pokemon_nodes(&mut pokemon_nodes, &last_row_map,
+            &final_pokemon, &final_pokemon_ivs);
 
         PokemonBreedTree {
             pokemon_nodes,
-            final_pokemon,
-            final_pokemon_ivs,
             breed_errors,
         }
     }
+
+    pub fn get_final_pokemon_node(&self) -> &PokemonBreedTreeNode {
+        self.pokemon_nodes.get(&Position(0, 0)).unwrap()
+    }
+
+    pub fn insert_pokemon(&self, position: Position, pokemon_node: PokemonBreedTreeNode) {
+        self.pokemon_nodes.insert(position, pokemon_node);
+    }
 }
 
-struct PokemonBreedTreeNode {
-    pokemon: Pokemon,
-    gender: PokemonGender,
-    ivs: Vec<PokemonIv>,
+// Initialize the pokemon nodes based on the initial position_map and the final pokemon ivs & nature.
+fn init_pokemon_nodes(
+    pokemon_nodes: &mut HashMap<Position, PokemonBreedTreeNode>,
+    position_map: &HashMap<u8, PokemonBreedTreePosition>,
+    final_pokemon: &Pokemon,
+    final_pokemon_ivs: &HashMap<PokemonBreederKind, PokemonIv>,
+) {
+    let generations = if final_pokemon.nature.is_some() {
+        (final_pokemon_ivs.len() + 1) as u8
+    } else {
+        final_pokemon_ivs.len() as u8
+    };
+
+    //row starts at 1 because we already have the final pokemon at pos 0,0
+    for row in 1..generations {
+        for col in 0..((2u8.pow(row as u32)) - 1) {
+            let position = Position(row, col);
+            let pokemon_node = get_node_from_position_map(
+                pokemon_nodes,
+                position_map,
+                position,
+                final_pokemon_ivs,
+            );
+            pokemon_nodes.insert(position, pokemon_node);
+        }
+    }
+    
+
 }
 
-fn init_position_map() -> HashMap<u8, PokemonBreedTreePosition> {
-    let position_map = HashMap::<u8, PokemonBreedTreePosition>::from([
+fn get_node_from_position_map(
+    pokemon_nodes: &mut HashMap<Position, PokemonBreedTreeNode>,
+    position_map: &HashMap<u8, PokemonBreedTreePosition>,
+    position: Position,
+    final_pokemon_ivs: &HashMap<PokemonBreederKind, PokemonIv>
+) -> PokemonBreedTreeNode {
+
+
+}
+
+fn init_last_row_mapping() -> HashMap<u8, PokemonBreedTreePosition> {
+    let last_row = HashMap::<u8, PokemonBreedTreePosition>::from([
         (
             2,
             PokemonBreedTreePosition {
@@ -205,5 +253,5 @@ fn init_position_map() -> HashMap<u8, PokemonBreedTreePosition> {
             },
         ),
     ]);
-    position_map
+    last_row
 }

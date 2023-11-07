@@ -69,7 +69,7 @@ pub enum PokemonEggGroup {
     Genderless,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum PokemonIv {
     HP,
     Attack,
