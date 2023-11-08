@@ -1,5 +1,5 @@
 #![allow(unused, dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,PartialEq,Eq)]
 pub enum PokemonType {
     Fire,
     Water,
@@ -20,7 +20,7 @@ pub enum PokemonType {
     Steel,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone,PartialEq, Eq)]
 pub enum PokemonNature {
     Hardy,
     Lonely,
@@ -69,7 +69,7 @@ pub enum PokemonEggGroup {
     Genderless,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone,PartialEq, Eq)]
 pub enum PokemonIv {
     HP,
     Attack,
@@ -79,20 +79,20 @@ pub enum PokemonIv {
     Speed,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone,PartialEq, Eq)]
 pub enum PokemonGender {
     Female,
     Male,
     Genderless,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug,PartialEq, Eq, Clone)]
 pub struct Pokemon {
     pub number: u16,
     pub name: String,
     pub types: (PokemonType, Option<PokemonType>),
     pub egg_groups: (PokemonEggGroup, Option<PokemonEggGroup>),
-    pub percentage_male: f32,
+    pub percentage_male: String,
 }
 
 impl Pokemon {
@@ -101,5 +101,9 @@ impl Pokemon {
             Some(ref egg_group2) => self.egg_groups.0 == *egg_group || *egg_group2 == *egg_group,
             None => self.egg_groups.0 == *egg_group,
         }
+    }
+
+    pub fn percentage_male_as_f32(&self) -> f32 {
+        self.percentage_male.parse::<f32>().expect("This shouldn't happen")
     }
 }
