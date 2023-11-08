@@ -92,7 +92,6 @@ pub struct Pokemon {
     pub name: String,
     pub types: (PokemonType, Option<PokemonType>),
     pub egg_groups: (PokemonEggGroup, Option<PokemonEggGroup>),
-    pub nature: Option<PokemonNature>,
     pub percentage_male: f32,
 }
 

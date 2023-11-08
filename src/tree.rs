@@ -1,5 +1,5 @@
 #![allow(unused, dead_code)]
-use crate::pokemon::{Pokemon, PokemonGender, PokemonIv};
+use crate::pokemon::{Pokemon, PokemonGender, PokemonIv,PokemonNature};
 use std::collections::HashMap;
 
 /* In Pokemmo, in breeding, you can only breed a pokemon couple once.
@@ -24,7 +24,7 @@ pub struct PokemonBreedTreePosition {
     natureless: PokemonBreederKindPositions,
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy,Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position(u8, u8);
 
 impl Position {
@@ -41,33 +41,45 @@ type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 
 //option fields because the initial state of nodes are empty, only ivs are set
 #[derive(Debug)]
-struct PokemonBreedTreeNode {
-    pokemon: Option<Pokemon>, 
-    gender: Option<PokemonGender>,
-    ivs: Vec<PokemonIv>,
+pub struct PokemonBreedTreeNode {
+    pub pokemon: Option<Pokemon>,
+    pub gender: Option<PokemonGender>,
+    pub nature: Option<PokemonNature>,
+    pub ivs: Vec<PokemonIv>,
 }
+
+type PokemonNodes = HashMap<Position, PokemonBreedTreeNode>;
 
 #[derive(Debug)]
 pub struct PokemonBreedTree {
-    pub pokemon_nodes: HashMap<Position, PokemonBreedTreeNode>,
+    pub pokemon_nodes: PokemonNodes,
     pub breed_errors: Vec<Position>,
 }
 
+type FinalPokemonIvsMap = HashMap<PokemonBreederKind, PokemonIv>;
+
 impl PokemonBreedTree {
-    pub fn new(
-        final_pokemon: Pokemon,
-        final_pokemon_ivs: HashMap<PokemonBreederKind, PokemonIv>,
-    ) -> PokemonBreedTree {
-        let final_pokemon_node = PokemonBreedTreeNode{
-            // get all ivs from the final_pokemon_ivs and construct a Vec<PokemonIv>
-            ivs: final_pokemon_ivs.values().cloned().collect(),
-        }
+    pub fn new(final_pokemon_node: &PokemonBreedTreeNode, final_pokemon_ivs_map: &FinalPokemonIvsMap) -> PokemonBreedTree {
+        let final_pokemon = final_pokemon_node.pokemon.expect("This should exist");
         let breed_errors = Vec::<Position>::new();
-        let mut pokemon_nodes = HashMap::from([(Position(0, 0),
-            final_pokemon)]);
+        let mut pokemon_nodes = HashMap::from([(Position(0, 0), *final_pokemon_node)]);
         let last_row_map = init_last_row_mapping();
-        init_pokemon_nodes(&mut pokemon_nodes, &last_row_map,
-            &final_pokemon, &final_pokemon_ivs);
+        let natured = final_pokemon_node.nature.is_some();
+        let generations = if natured {
+            (final_pokemon_node.ivs.len() + 1) as u8
+        } else {
+            final_pokemon_node.ivs.len() as u8
+        };
+
+        let last_row_breeders = 
+            last_row_map.get(&generations).expect("This shouldn't happen. Tried to access last_row_map with an invalid generations number");
+
+        init_pokemon_nodes(
+            &mut pokemon_nodes,
+            if natured { &last_row_breeders.natured } else { &last_row_breeders.natureless },
+            &final_pokemon_node,
+            &final_pokemon_ivs_map
+        );
 
         PokemonBreedTree {
             pokemon_nodes,
@@ -79,52 +91,42 @@ impl PokemonBreedTree {
         self.pokemon_nodes.get(&Position(0, 0)).unwrap()
     }
 
-    pub fn insert_pokemon(&self, position: Position, pokemon_node: PokemonBreedTreeNode) {
+    pub fn insert_pokemon(&mut self, position: Position, pokemon_node: PokemonBreedTreeNode) {
         self.pokemon_nodes.insert(position, pokemon_node);
     }
 }
 
 // Initialize the pokemon nodes based on the initial position_map and the final pokemon ivs & nature.
 fn init_pokemon_nodes(
-    pokemon_nodes: &mut HashMap<Position, PokemonBreedTreeNode>,
-    position_map: &HashMap<u8, PokemonBreedTreePosition>,
-    final_pokemon: &Pokemon,
-    final_pokemon_ivs: &HashMap<PokemonBreederKind, PokemonIv>,
+    pokemon_nodes: &mut PokemonNodes,
+    last_row_breeders: &PokemonBreederKindPositions,
+    final_pokemon_node: &PokemonBreedTreeNode,
+    final_pokemon_ivs: &FinalPokemonIvsMap,
 ) {
-    let generations = if final_pokemon.nature.is_some() {
-        (final_pokemon_ivs.len() + 1) as u8
-    } else {
-        final_pokemon_ivs.len() as u8
-    };
+    // initialize last row
+    for (k,v) in last_row_breeders {
+        match v {
+            PokemonBreederKind::Nature => {
+                let node = PokemonBreedTreeNode{
+                    pokemon: None,
+                    gender: None,
+                    ivs: vec![],
+                    nature: final_pokemon_node.nature
+                };
+                pokemon_nodes.insert(*k, node);
+            },
+            _ => {
 
-    //row starts at 1 because we already have the final pokemon at pos 0,0
-    for row in 1..generations {
-        for col in 0..((2u8.pow(row as u32)) - 1) {
-            let position = Position(row, col);
-            let pokemon_node = get_node_from_position_map(
-                pokemon_nodes,
-                position_map,
-                position,
-                final_pokemon_ivs,
-            );
-            pokemon_nodes.insert(position, pokemon_node);
-        }
+            }
+        };
     }
-    
-
 }
 
-fn get_node_from_position_map(
-    pokemon_nodes: &mut HashMap<Position, PokemonBreedTreeNode>,
-    position_map: &HashMap<u8, PokemonBreedTreePosition>,
-    position: Position,
-    final_pokemon_ivs: &HashMap<PokemonBreederKind, PokemonIv>
-) -> PokemonBreedTreeNode {
+// This type represents what the last row of pokemon iv's should be, depending on the nr of
+// generations
+type LastRowMapping = HashMap<u8, PokemonBreedTreePosition>;
 
-
-}
-
-fn init_last_row_mapping() -> HashMap<u8, PokemonBreedTreePosition> {
+fn init_last_row_mapping() -> LastRowMapping {
     let last_row = HashMap::<u8, PokemonBreedTreePosition>::from([
         (
             2,
