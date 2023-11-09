@@ -54,7 +54,7 @@ impl Position {
 type PokemonBreedTreePositionMap = HashMap<u8, PokemonBreedTreePosition>;
 
 //option fields because the initial state of nodes are empty, only ivs are set
-#[derive(Debug,PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PokemonBreedTreeNode {
     pub pokemon: Option<Pokemon>,
     pub gender: Option<PokemonGender>,
@@ -90,8 +90,7 @@ impl PokemonBreedTree {
             final_pokemon_node.ivs.len() as u8
         };
 
-        let last_row_breeders = 
-            last_row_map.get(&generations).expect("This shouldn't happen. Tried to access last_row_map with an invalid generations number");
+        let last_row_breeders = last_row_map.get(&generations).expect("This shouldn't happen. Tried to access last_row_map with an invalid generations number");
 
         init_pokemon_nodes(
             generations,
@@ -343,61 +342,120 @@ fn init_last_row_mapping() -> LastRowMapping {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{pokemon::{PokemonIv, Pokemon, PokemonType, PokemonEggGroup}, tree::Position};
+    use crate::{
+        pokemon::{Pokemon, PokemonEggGroup, PokemonIv, PokemonType},
+        tree::Position,
+    };
 
     use super::{PokemonBreedTree, PokemonBreedTreeNode, PokemonBreederKind};
 
     #[test]
     fn pokemon_breed_tree_constructor_2iv_test() {
         let final_ivs = [PokemonIv::Attack, PokemonIv::Speed].to_vec();
-        let final_pokemon = Pokemon{
+        let final_pokemon = Pokemon {
             number: 6,
             name: "Charizard".to_string(),
             types: (PokemonType::Fire, Some(PokemonType::Flying)),
             egg_groups: (PokemonEggGroup::Monster, Some(PokemonEggGroup::Dragon)),
-            percentage_male: 87.5.to_string(),
+            percentage_male: 87.5,
         };
-        let final_pokemon_node = PokemonBreedTreeNode{
+        let final_pokemon_node = PokemonBreedTreeNode {
             ivs: final_ivs.clone(),
-            pokemon:Some(final_pokemon),
+            pokemon: Some(final_pokemon),
             gender: None,
             nature: None,
         };
-        let final_iv_map = HashMap::from([(PokemonBreederKind::A, PokemonIv::Attack), (PokemonBreederKind::B, PokemonIv::Speed)]);
-        let tree = PokemonBreedTree::new(&final_pokemon_node,&final_iv_map);
+        let final_iv_map = HashMap::from([
+            (PokemonBreederKind::A, PokemonIv::Attack),
+            (PokemonBreederKind::B, PokemonIv::Speed),
+        ]);
+        let tree = PokemonBreedTree::new(&final_pokemon_node, &final_iv_map);
 
-        assert_eq!(tree.pokemon_nodes.len(),3);
-        assert_eq!(tree.get_final_pokemon_node(),&final_pokemon_node);
-        assert_eq!(tree.pokemon_nodes.get(&Position(1,0)).expect("Should exist").ivs,vec![PokemonIv::Attack]);
-        assert_eq!(tree.pokemon_nodes.get(&Position(1,1)).expect("Should exist").ivs,vec![PokemonIv::Speed]);
+        assert_eq!(tree.pokemon_nodes.len(), 3);
+        assert_eq!(tree.get_final_pokemon_node(), &final_pokemon_node);
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(1, 0))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Attack]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(1, 1))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Speed]
+        );
     }
 
     #[test]
     fn pokemon_breed_tree_constructor_3iv_test() {
-        let final_ivs = [PokemonIv::Attack, PokemonIv::Speed,PokemonIv::HP].to_vec();
-        let final_pokemon = Pokemon{
+        let final_ivs = [PokemonIv::Attack, PokemonIv::Speed, PokemonIv::HP].to_vec();
+        let final_pokemon = Pokemon {
             number: 6,
             name: "Charizard".to_string(),
             types: (PokemonType::Fire, Some(PokemonType::Flying)),
             egg_groups: (PokemonEggGroup::Monster, Some(PokemonEggGroup::Dragon)),
-            percentage_male: 87.5.to_string(),
+            percentage_male: 87.5,
         };
-        let final_pokemon_node = PokemonBreedTreeNode{
+        let final_pokemon_node = PokemonBreedTreeNode {
             ivs: final_ivs.clone(),
-            pokemon:Some(final_pokemon),
+            pokemon: Some(final_pokemon),
             gender: None,
             nature: None,
         };
-        let final_iv_map = HashMap::from([(PokemonBreederKind::A, PokemonIv::Attack), (PokemonBreederKind::B, PokemonIv::Speed),
-        (PokemonBreederKind::C, PokemonIv::HP)]);
-        let tree = PokemonBreedTree::new(&final_pokemon_node,&final_iv_map);
+        let final_iv_map = HashMap::from([
+            (PokemonBreederKind::A, PokemonIv::Attack),
+            (PokemonBreederKind::B, PokemonIv::Speed),
+            (PokemonBreederKind::C, PokemonIv::HP),
+        ]);
+        let tree = PokemonBreedTree::new(&final_pokemon_node, &final_iv_map);
+        eprintln!("{:#?}", tree);
 
-        assert_eq!(tree.pokemon_nodes.len(),7);
-        assert_eq!(tree.get_final_pokemon_node(),&final_pokemon_node);
-        assert_eq!(tree.pokemon_nodes.get(&Position(2,0)).expect("Should exist").ivs,vec![PokemonIv::Attack]);
-        assert_eq!(tree.pokemon_nodes.get(&Position(2,1)).expect("Should exist").ivs,vec![PokemonIv::Speed]);
-        assert_eq!(tree.pokemon_nodes.get(&Position(2,2)).expect("Should exist").ivs,vec![PokemonIv::HP]);
-        assert_eq!(tree.pokemon_nodes.get(&Position(1,0)).expect("Should exist").ivs,vec![PokemonIv::Attack, PokemonIv::Speed]);
-        assert_eq!(tree.pokemon_nodes.get(&Position(1,1)).expect("Should exist").ivs,vec![PokemonIv::Attack, PokemonIv::HP]);
+        assert_eq!(tree.pokemon_nodes.len(), 7);
+        assert_eq!(tree.get_final_pokemon_node(), &final_pokemon_node);
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(2, 0))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Attack]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(2, 1))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Speed]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(2, 2))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Attack]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(2, 3))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::HP]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(1, 0))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Attack, PokemonIv::Speed]
+        );
+        assert_eq!(
+            tree.pokemon_nodes
+                .get(&Position(1, 1))
+                .expect("Should exist")
+                .ivs,
+            vec![PokemonIv::Attack, PokemonIv::HP]
+        );
     }
 }
